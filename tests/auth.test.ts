@@ -5,6 +5,9 @@ import { getDb, closeDb } from '../src/db/database.js';
 
 describe('Concept 3 - Authentication & API Key Management', () => {
   const app = createApp();
+  const testId = Date.now();
+  const testEmail = `founder_${testId}@acme.ai`;
+  const testSlug = `acme-ai-${testId}`;
   let userToken: string;
   let tenantId: string;
   let rawApiKey: string;
@@ -23,8 +26,8 @@ describe('Concept 3 - Authentication & API Key Management', () => {
       .post('/api/v1/auth/register')
       .send({
         tenant_name: 'Acme AI Labs',
-        tenant_slug: 'acme-ai-labs',
-        email: 'founder@acme.ai',
+        tenant_slug: testSlug,
+        email: testEmail,
         password: 'SuperSecretPassword123!',
         monthly_budget_usd: 150.0,
       });
@@ -32,8 +35,8 @@ describe('Concept 3 - Authentication & API Key Management', () => {
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.data.token).toBeDefined();
-    expect(res.body.data.user.email).toBe('founder@acme.ai');
-    expect(res.body.data.tenant.slug).toBe('acme-ai-labs');
+    expect(res.body.data.user.email).toBe(testEmail);
+    expect(res.body.data.tenant.slug).toBe(testSlug);
 
     userToken = res.body.data.token;
     tenantId = res.body.data.tenant.id;
@@ -43,7 +46,7 @@ describe('Concept 3 - Authentication & API Key Management', () => {
     const res = await request(app)
       .post('/api/v1/auth/login')
       .send({
-        email: 'founder@acme.ai',
+        email: testEmail,
         password: 'SuperSecretPassword123!',
       });
 
@@ -77,7 +80,7 @@ describe('Concept 3 - Authentication & API Key Management', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.user.email).toBe('founder@acme.ai');
+    expect(res.body.user.email).toBe(testEmail);
     expect(res.body.tenant.id).toBe(tenantId);
   });
 

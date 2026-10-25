@@ -2,6 +2,7 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import { healthRouter } from './routes/health.routes.js';
 import { telemetryRouter } from './routes/telemetry.routes.js';
 import { authRouter } from './routes/auth.routes.js';
+import { analyticsRouter } from './routes/analytics.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -39,6 +40,7 @@ export function createApp(): Express {
   app.use('/api/v1/health', healthRouter);
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/telemetry', telemetryRouter);
+  app.use('/api/v1/analytics', analyticsRouter);
 
   // 404 Handler
   app.use((req: Request, res: Response) => {

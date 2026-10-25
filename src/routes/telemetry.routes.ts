@@ -6,6 +6,7 @@ import { TelemetryRepository } from '../repositories/telemetry.repository.js';
 import { TenantRepository } from '../repositories/tenant.repository.js';
 import { calculateCost } from '../services/pricing.service.js';
 import { AuthService } from '../services/auth.service.js';
+import { AnalyticsService } from '../services/analytics.service.js';
 import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 
 export const telemetryRouter = Router();
@@ -91,6 +92,9 @@ telemetryRouter.post(
         latency_ms: payload.latency_ms,
         metadata: payload.metadata ? JSON.stringify(payload.metadata) : undefined,
       });
+
+      // Invalidate cached aggregations for this tenant so the next dashboard query reflects fresh data
+      AnalyticsService.invalidateTenantCache(tenantId);
 
       res.status(201).json({
         success: true,
