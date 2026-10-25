@@ -5,6 +5,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { analyticsRouter } from './routes/analytics.routes.js';
 import { jobsRouter, anomaliesRouter } from './routes/jobs.routes.js';
 import { reportsRouter } from './routes/reports.routes.js';
+import { advisorRouter } from './routes/advisor.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -46,6 +47,7 @@ export function createApp(): Express {
   app.use('/api/v1/jobs', jobsRouter);
   app.use('/api/v1/anomalies', anomaliesRouter);
   app.use('/api/v1/reports', reportsRouter);
+  app.use('/api/v1/advisor', advisorRouter);
 
   // 404 Handler
   app.use((req: Request, res: Response) => {
