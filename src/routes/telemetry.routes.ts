@@ -1,10 +1,12 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { validateBody } from '../middleware/validation.js';
 import { TelemetryRepository } from '../repositories/telemetry.repository.js';
 import { TenantRepository } from '../repositories/tenant.repository.js';
 import { calculateCost } from '../services/pricing.service.js';
+import { AuthService } from '../services/auth.service.js';
+import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 
 export const telemetryRouter = Router();
 
@@ -24,24 +26,51 @@ const telemetryIngestSchema = z.object({
 telemetryRouter.post(
   '/',
   validateBody(telemetryIngestSchema),
-  async (req: Request, res: Response): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const payload = req.body;
 
-      // Ensure tenant exists or fallback to default
-      let tenantId = payload.tenant_id;
-      if (!tenantId) {
-        const defaultTenant = TenantRepository.ensureDefaultTenant();
-        tenantId = defaultTenant.id;
-      } else {
-        const tenant = TenantRepository.findById(tenantId);
-        if (!tenant) {
-          res.status(404).json({
+      // 1. Resolve Tenant: Check x-api-key header, Bearer JWT, or payload.tenant_id
+      let tenantId: string | undefined;
+
+      const apiKeyHeader = req.headers['x-api-key'] as string | undefined;
+      const authHeader = req.headers.authorization;
+
+      if (apiKeyHeader) {
+        const apiKeyRecord = AuthService.verifyApiKey(apiKeyHeader);
+        if (!apiKeyRecord) {
+          res.status(401).json({
             success: false,
-            error: `Tenant with ID '${tenantId}' does not exist`,
+            error: 'Unauthorized: Invalid or revoked API key',
           });
           return;
         }
+        tenantId = apiKeyRecord.tenant_id;
+      } else if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const tokenPayload = AuthService.verifyJwt(authHeader.split(' ')[1]);
+          tenantId = tokenPayload.tenantId;
+        } catch {
+          res.status(401).json({
+            success: false,
+            error: 'Unauthorized: Invalid Bearer token',
+          });
+          return;
+        }
+      } else if (payload.tenant_id) {
+        const tenant = TenantRepository.findById(payload.tenant_id);
+        if (!tenant) {
+          res.status(404).json({
+            success: false,
+            error: `Tenant with ID '${payload.tenant_id}' does not exist`,
+          });
+          return;
+        }
+        tenantId = tenant.id;
+      } else {
+        // Fallback default tenant
+        const defaultTenant = TenantRepository.ensureDefaultTenant();
+        tenantId = defaultTenant.id;
       }
 
       const totalTokens = payload.prompt_tokens + payload.completion_tokens;
@@ -88,7 +117,7 @@ telemetryRouter.post(
   }
 );
 
-telemetryRouter.get('/', (req: Request, res: Response): void => {
+telemetryRouter.get('/', (req: AuthenticatedRequest, res: Response): void => {
   try {
     const tenantId = (req.query.tenant_id as string) || TenantRepository.ensureDefaultTenant().id;
     const limit = Math.min(parseInt((req.query.limit as string) || '50', 10), 100);

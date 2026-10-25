@@ -1,6 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import { healthRouter } from './routes/health.routes.js';
 import { telemetryRouter } from './routes/telemetry.routes.js';
+import { authRouter } from './routes/auth.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -18,8 +19,17 @@ export function createApp(): Express {
       status: 'operational',
       docs: {
         health: 'GET /health',
-        telemetry: 'POST /api/v1/telemetry',
-        records: 'GET /api/v1/telemetry',
+        auth: {
+          register: 'POST /api/v1/auth/register',
+          login: 'POST /api/v1/auth/login',
+          me: 'GET /api/v1/auth/me',
+          createApiKey: 'POST /api/v1/auth/api-keys',
+          listApiKeys: 'GET /api/v1/auth/api-keys',
+        },
+        telemetry: {
+          ingest: 'POST /api/v1/telemetry',
+          list: 'GET /api/v1/telemetry',
+        },
       },
     });
   });
@@ -27,6 +37,7 @@ export function createApp(): Express {
   // Mount Routes
   app.use('/health', healthRouter);
   app.use('/api/v1/health', healthRouter);
+  app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/telemetry', telemetryRouter);
 
   // 404 Handler
