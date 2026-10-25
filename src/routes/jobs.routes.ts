@@ -21,7 +21,8 @@ jobsRouter.post('/anomaly-sweep', (req: Request, res: Response): void => {
 
 // Check background job status
 jobsRouter.get('/:id', (req: Request, res: Response): void => {
-  const job = queue.getJob(req.params.id);
+  const jobId = String(req.params.id);
+  const job = queue.getJob(jobId);
   if (!job) {
     res.status(404).json({
       success: false,

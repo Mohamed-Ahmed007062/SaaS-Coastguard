@@ -222,7 +222,7 @@ authRouter.get('/api-keys', requireUserAuth, (req: AuthenticatedRequest, res: Re
 // Revoke API Key
 authRouter.delete('/api-keys/:id', requireUserAuth, (req: AuthenticatedRequest, res: Response): void => {
   try {
-    const keyId = req.params.id;
+    const keyId = String(req.params.id);
     const success = ApiKeyRepository.revoke(keyId, req.tenant!.id);
 
     if (!success) {
