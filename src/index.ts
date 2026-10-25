@@ -2,6 +2,7 @@ import { createApp } from './app.js';
 import { config } from './config/index.js';
 import { getDb } from './db/database.js';
 import { TenantRepository } from './repositories/tenant.repository.js';
+import { startCronJobs, stopCronJobs } from './jobs/cron.js';
 
 async function bootstrap() {
   try {
@@ -17,11 +18,15 @@ async function bootstrap() {
       console.log(`[CostGuard] Server running on http://localhost:${config.port}`);
       console.log(`[CostGuard] Health check available at: http://localhost:${config.port}/health`);
       console.log(`[CostGuard] Telemetry endpoint: POST http://localhost:${config.port}/api/v1/telemetry`);
+      
+      // 3. Start scheduled background cron jobs
+      startCronJobs();
     });
 
     // Graceful Shutdown
     const shutdown = () => {
       console.log('\n[CostGuard] Shutting down gracefully...');
+      stopCronJobs();
       server.close(() => {
         console.log('[CostGuard] HTTP server closed.');
         process.exit(0);

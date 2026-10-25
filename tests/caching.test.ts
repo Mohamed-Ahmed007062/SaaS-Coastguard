@@ -12,7 +12,8 @@ describe('Concept 6 - In-Memory Caching & Performance Optimization', () => {
   beforeAll(() => {
     getDb();
     CacheService.clear();
-    const tenant = TenantRepository.create('Cache Test Org', 'cache-test-org', 200.0);
+    const id = Date.now();
+    const tenant = TenantRepository.create(`Cache Test Org ${id}`, `cache-test-org-${id}`, 200.0);
     testTenantId = tenant.id;
   });
 
